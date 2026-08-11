@@ -22,23 +22,7 @@ echo -e "${CYAN}     KDE Background Service Disabler${NC}"
 echo -e "${CYAN}=================================================${NC}"
 echo ""
 
-# ── Only remove the truly useless PIM stuff
-log "Removing Akonadi/PIM packages..."
-zypper --non-interactive remove --clean-deps \
-    akregator \
-    kmail \
-    korganizer \
-    kaddressbook \
-    kontact \
-    knotes \
-    kjots \
-    kdepim-addons \
-    merkuro \
-    2>/dev/null || warn "Some PIM packages not installed — continuing"
-success "PIM suite removed"
-
 # ── Disable Baloo
-echo ""
 log "Disabling Baloo file indexer..."
 if command -v balooctl6 &>/dev/null; then
     balooctl6 suspend 2>/dev/null || true
@@ -101,7 +85,7 @@ fi
 
 # ── Cleanup
 echo ""
-log "Cleaning up..."
+log "Cleaning caches..."
 rm -rf ~/.local/share/akonadi ~/.config/akonadi ~/.local/share/baloo ~/.cache/packagekit 2>/dev/null || true
 success "Caches cleaned"
 
@@ -111,15 +95,14 @@ echo -e "${CYAN}=================================================${NC}"
 echo -e "${GREEN}  ✓ Services disabled${NC}"
 echo -e "${CYAN}=================================================${NC}"
 echo ""
-echo -e "${BLUE}What was done:${NC}"
-echo "  • Removed PIM suite (Akonadi/KMail/KOrganizer)"
-echo "  • Disabled Baloo file indexer"
-echo "  • Disabled Akonadi services"
-echo "  • Disabled Telepathy (IM framework)"
-echo "  • Disabled PackageKit"
-echo "  • Cleaned caches"
+echo -e "${BLUE}What was disabled:${NC}"
+echo "  • Baloo file indexer (~200-300MB)"
+echo "  • Akonadi PIM database (~200-400MB)"
+echo "  • Telepathy IM framework"
+echo "  • PackageKit background daemon"
 echo ""
-echo -e "${BLUE}Everything else is untouched.${NC}"
+echo -e "${BLUE}RAM savings: ~400-700MB${NC}"
+echo -e "${BLUE}Packages: untouched, nothing broken${NC}"
+echo ""
 echo -e "${YELLOW}→ Log out or restart to finish${NC}"
-echo -e "${YELLOW}→ RAM savings: ~400-600MB${NC}"
 echo ""
