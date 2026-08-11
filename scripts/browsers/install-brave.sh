@@ -1,41 +1,53 @@
 #!/usr/bin/env bash
 #
-# Brave Browser Installer (Idempotent Version)
-# Checks for existing repo and installation before execution.
+# setup-brave.sh — Brave Browser Installer for openSUSE
+# Usage: sudo ./setup-brave.sh
 
 set -euo pipefail
 
-readonly LOG_PREFIX="[BRAVE-INSTALL]"
+# ── Colors
+GREEN='\033[0;32m' BLUE='\033[0;34m' YELLOW='\033[0;33m' RED='\033[0;31m' CYAN='\033[0;36m' NC='\033[0m'
+log()    { echo -e "${BLUE}[INFO]${NC} $1"; }
+success(){ echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+warn()   { echo -e "${YELLOW}[WARN]${NC} $1"; }
+error()  { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
+
+# ── Guard
+[[ "${EUID}" -eq 0 ]] || error "Run with sudo: sudo $0"
+
 readonly BRAVE_REPO_URL="https://brave-browser-rpm-release.s3.brave.com/\$basearch"
 readonly BRAVE_KEY="https://brave-browser-rpm-release.s3.brave.com/brave-core.asc"
 readonly REPO_ALIAS="brave-browser"
 
-log_info()    { printf "%s (INFO): %s\n" "${LOG_PREFIX}" "$*"; }
-log_success() { printf "%s (OK): %s\n" "${LOG_PREFIX}" "$*"; }
+clear
+echo -e "${CYAN}=================================================${NC}"
+echo -e "${CYAN}        Brave Browser Setup${NC}"
+echo -e "${CYAN}=================================================${NC}"
+echo ""
 
-main() {
-    # Elevation check
-    [[ "${EUID}" -ne 0 ]] && exec sudo "$0" "$@"
+# ── Repo
+log "Setting up Brave repository..."
+if ! zypper repos | grep -q "${REPO_ALIAS}"; then
+    rpm --import "${BRAVE_KEY}"
+    zypper addrepo -f "${BRAVE_REPO_URL}" "${REPO_ALIAS}"
+    success "Repository added"
+else
+    warn "Repository already present"
+fi
 
-    # 1. Handle Repository
-    if ! zypper repos | grep -q "${REPO_ALIAS}"; then
-        log_info "Importing GPG key and adding Brave repository..."
-        rpm --import "${BRAVE_KEY}"
-        # Using -f (autorefresh) and -G (ignore GPG check during repo add as we imported it)
-        zypper addrepo -fG "${BRAVE_REPO_URL}" "${REPO_ALIAS}"
-    else
-        log_info "Brave repository already exists. Skipping..."
-    fi
+# ── Install
+echo ""
+log "Installing Brave Browser..."
+if ! rpm -q brave-browser &>/dev/null; then
+    env ZYPP_CURL2=1 zypper --non-interactive install brave-browser
+    success "Brave Browser installed"
+else
+    warn "Brave Browser already installed"
+fi
 
-    # 2. Check and Install Package
-    if ! rpm -q brave-browser &>/dev/null; then
-        log_info "Installing Brave Browser..."
-        # ZYPP_CURL2=1 is often recommended for S3-backed repos on older zypper versions
-        env ZYPP_CURL2=1 zypper --non-interactive install brave-browser
-        log_success "Installation complete."
-    else
-        log_success "Brave Browser is already installed."
-    fi
-}
-
-main "$@"
+# ── Done
+echo ""
+echo -e "${CYAN}=================================================${NC}"
+echo -e "${GREEN}  ✓ Brave setup complete${NC}"
+echo -e "${CYAN}=================================================${NC}"
+echo ""
