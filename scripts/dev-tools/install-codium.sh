@@ -7,6 +7,7 @@
 # Exit codes: 0 ok · 1 error · 2 aborted
 # Idempotent: safe to re-run. Must run as root (except --dry-run).
 # Standalone: writes its own repo file, needs no other script first.
+# === MODULES: config / helpers / guards / steps / main (all in this file) ===
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -64,6 +65,7 @@ require_root() {
     command -v zypper >/dev/null || die "zypper not found (openSUSE required)"
 }
 
+# === MODULE: step_repo v1 ===
 step_repo() {
     log "Setting up VSCodium repository..."
     if [[ -f "$REPO_FILE" ]]; then
@@ -83,7 +85,9 @@ EOF"
     fi
     run zypper --non-interactive --gpg-auto-import-keys refresh --from "$REPO_NAME"
 }
+# === END MODULE: step_repo ===
 
+# === MODULE: step_install v1 ===
 step_install() {
     log "Installing VSCodium..."
     if $DRY_RUN || ! rpm -q "$PKG" &>/dev/null; then
@@ -93,6 +97,7 @@ step_install() {
         warn "VSCodium already installed"
     fi
 }
+# === END MODULE: step_install ===
 
 main() {
     parse_args "$@"

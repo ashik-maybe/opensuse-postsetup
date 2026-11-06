@@ -8,6 +8,7 @@
 # Exit codes: 0 ok · 1 error · 2 aborted
 # Idempotent: missing packages are skipped. Destructive — use --dry-run first.
 # Standalone: needs no other script first. Creates its own snapper snapshot.
+# === MODULES: config / helpers / guards / steps / main (all in this file) ===
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -87,13 +88,16 @@ user_home() {
     getent passwd "$user" | cut -d: -f6
 }
 
+# === MODULE: step_list v1 ===
 step_list() {
     log "Packages to remove (${#PACKAGES[@]}):"
     local pkg
     for pkg in "${PACKAGES[@]}"; do echo "  - $pkg"; done
     echo ""
 }
+# === END MODULE: step_list ===
 
+# === MODULE: step_snapshot v1 ===
 step_snapshot() {
     log "Creating pre-debloat snapshot..."
     if command -v snapper >/dev/null; then
@@ -102,13 +106,17 @@ step_snapshot() {
         warn "Snapper not present — skipping"
     fi
 }
+# === END MODULE: step_snapshot ===
 
+# === MODULE: step_remove v1 ===
 step_remove() {
     log "Removing packages (missing ones skipped)..."
     run zypper --non-interactive remove --clean-deps "${PACKAGES[@]}"
     ok "Packages removed"
 }
+# === END MODULE: step_remove ===
 
+# === MODULE: step_lock v1 ===
 step_lock() {
     log "Locking removed packages..."
     local pkg locks
@@ -120,7 +128,9 @@ step_lock() {
     done
     ok "Packages locked"
 }
+# === END MODULE: step_lock ===
 
+# === MODULE: step_tracker v1 ===
 step_tracker() {
     log "Disabling Tracker (file content indexer)..."
     run bash -c "command -v tracker3 >/dev/null && tracker3 daemon -t || true"
@@ -131,7 +141,9 @@ step_tracker() {
     fi
     ok "Tracker disabled"
 }
+# === END MODULE: step_tracker ===
 
+# === MODULE: step_cleanup v1 ===
 step_cleanup() {
     log "Cleaning up..."
     local home
@@ -142,6 +154,7 @@ step_cleanup() {
     run zypper clean --all >/dev/null
     ok "Cleanup complete"
 }
+# === END MODULE: step_cleanup ===
 
 main() {
     parse_args "$@"

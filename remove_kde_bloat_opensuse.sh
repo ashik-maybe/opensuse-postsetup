@@ -8,6 +8,7 @@
 # Exit codes: 0 ok · 1 error · 2 aborted
 # Idempotent: missing services are skipped. Use --dry-run first.
 # Standalone: needs no other script first.
+# === MODULES: config / helpers / guards / steps / main (all in this file) ===
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -81,6 +82,7 @@ run_user() {
     runuser -u "${SUDO_USER:-$(id -un)}" -- "$@"
 }
 
+# === MODULE: step_snapshot v1 ===
 step_snapshot() {
     log "Creating pre-debloat snapshot..."
     if command -v snapper >/dev/null; then
@@ -89,7 +91,9 @@ step_snapshot() {
         warn "Snapper not present — skipping"
     fi
 }
+# === END MODULE: step_snapshot ===
 
+# === MODULE: step_baloo v1 ===
 step_baloo() {
     log "Disabling Baloo file indexer..."
     if command -v balooctl6 >/dev/null; then
@@ -104,7 +108,9 @@ step_baloo() {
         warn "Baloo not found"
     fi
 }
+# === END MODULE: step_baloo ===
 
+# === MODULE: step_akonadi v1 ===
 step_akonadi() {
     log "Stopping Akonadi..."
     if command -v akonadictl >/dev/null; then
@@ -114,7 +120,9 @@ step_akonadi() {
         warn "akonadictl not found"
     fi
 }
+# === END MODULE: step_akonadi ===
 
+# === MODULE: step_user_services v1 ===
 step_user_services() {
     log "Disabling background services..."
     local svc
@@ -127,7 +135,9 @@ step_user_services() {
     done
     ok "User services disabled"
 }
+# === END MODULE: step_user_services ===
 
+# === MODULE: step_packagekit v1 ===
 step_packagekit() {
     log "Disabling PackageKit..."
     if systemctl is-active packagekit.service &>/dev/null 2>&1 || $DRY_RUN; then
@@ -137,7 +147,9 @@ step_packagekit() {
         warn "PackageKit not running"
     fi
 }
+# === END MODULE: step_packagekit ===
 
+# === MODULE: step_cleanup v1 ===
 step_cleanup() {
     log "Cleaning caches..."
     local home
@@ -147,6 +159,7 @@ step_cleanup() {
     fi
     ok "Caches cleaned"
 }
+# === END MODULE: step_cleanup ===
 
 main() {
     parse_args "$@"

@@ -7,6 +7,7 @@
 # Exit codes: 0 ok · 1 error · 2 aborted
 # Idempotent: existing config and keys are skipped, never overwritten.
 # Standalone: installs Git itself when missing, needs no other script first.
+# === MODULES: config / helpers / guards / steps / main (all in this file) ===
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -66,6 +67,7 @@ confirm() {
     [[ "$reply" =~ ^[Yy]$ ]]
 }
 
+# === MODULE: step_git v1 ===
 step_git() {
     log "Checking Git..."
     if command -v git >/dev/null; then
@@ -75,7 +77,9 @@ step_git() {
         ok "Git install requested"
     fi
 }
+# === END MODULE: step_git ===
 
+# === MODULE: step_user v1 ===
 step_user() {
     log "Setting up Git user info..."
     if [[ -n "$NAME" ]]; then
@@ -111,7 +115,9 @@ step_user() {
         fi
     fi
 }
+# === END MODULE: step_user ===
 
+# === MODULE: step_defaults v1 ===
 step_defaults() {
     log "Setting defaults and aliases..."
     run git config --global init.defaultBranch main
@@ -134,7 +140,9 @@ step_defaults() {
     fi
     ok "Defaults and aliases set"
 }
+# === END MODULE: step_defaults ===
 
+# === MODULE: step_ssh v1 ===
 step_ssh() {
     log "Setting up SSH key..."
     if [[ -f "$SSH_KEY" ]]; then
@@ -157,6 +165,7 @@ step_ssh() {
         warn "SSH key generation skipped"
     fi
 }
+# === END MODULE: step_ssh ===
 
 main() {
     parse_args "$@"

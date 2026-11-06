@@ -8,6 +8,7 @@
 # Exit codes: 0 ok · 1 error · 2 aborted
 # Idempotent: safe to re-run. Must run as root (except --dry-run).
 # Standalone: does not depend on any other script in this repo.
+# === MODULES: config / helpers / guards / steps / main (all in this file) ===
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -95,6 +96,7 @@ detect_os() {
 }
 
 # 3. Steps
+# === MODULE: step_snapshot v1 ===
 step_snapshot() {
     log "Creating pre-setup snapshot..."
     if command -v snapper >/dev/null && ! snapper list 2>/dev/null | grep -q "Pre-Setup"; then
@@ -103,7 +105,9 @@ step_snapshot() {
         warn "Snapper not present or snapshot exists — skipping"
     fi
 }
+# === END MODULE: step_snapshot ===
 
+# === MODULE: step_packman v1 ===
 step_packman() {
     log "Enabling Packman Essentials and multimedia codecs..."
     local packman_url
@@ -124,7 +128,9 @@ step_packman() {
     run zypper --non-interactive install --no-recommends "${CODECS[@]}"
     ok "Codecs installed"
 }
+# === END MODULE: step_packman ===
 
+# === MODULE: step_optimise_zypper v1 ===
 step_optimise_zypper() {
     log "Optimising zypper for speed..."
     if $DRY_RUN; then
@@ -146,7 +152,9 @@ step_optimise_zypper() {
     run zypper clean --all >/dev/null
     ok "Zypper optimised (backup: ${ZYPP_CONF}.bak)"
 }
+# === END MODULE: step_optimise_zypper ===
 
+# === MODULE: step_system_tuning v1 ===
 step_system_tuning() {
     log "Tuning system (fstrim, PackageKit mask, zRAM)..."
     run systemctl enable --now fstrim.timer
@@ -165,18 +173,23 @@ EOF"
         warn "zRAM already configured"
     fi
 }
+# === END MODULE: step_system_tuning ===
 
+# === MODULE: step_system_update v1 ===
 step_system_update() {
     log "Running full system update..."
     run zypper --non-interactive update --no-recommends
     ok "System updated"
 }
+# === END MODULE: step_system_update ===
 
+# === MODULE: step_cleanup v1 ===
 step_cleanup() {
     log "Cleaning up..."
     run zypper clean --all >/dev/null
     ok "Cleanup complete"
 }
+# === END MODULE: step_cleanup ===
 
 # 4. Main
 main() {

@@ -8,6 +8,7 @@
 # Exit codes: 0 ok · 1 error · 2 aborted
 # Idempotent: safe to re-run. Must run as root (except --dry-run).
 # Standalone: installs Flatpak, Flathub, and FUSE itself.
+# === MODULES: config / helpers / guards / steps / main (all in this file) ===
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -63,6 +64,7 @@ require_root() {
     command -v zypper >/dev/null || die "zypper not found (openSUSE required)"
 }
 
+# === MODULE: step_fuse v1 ===
 step_fuse() {
     log "Checking FUSE..."
     if rpm -q libfuse2 &>/dev/null; then
@@ -72,7 +74,9 @@ step_fuse() {
         ok "FUSE installed (zypper)"
     fi
 }
+# === END MODULE: step_fuse ===
 
+# === MODULE: step_flatpak v1 ===
 step_flatpak() {
     log "Setting up Flatpak and Flathub..."
     if ! command -v flatpak >/dev/null; then
@@ -81,7 +85,9 @@ step_flatpak() {
     run flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
     ok "Flathub repository enabled"
 }
+# === END MODULE: step_flatpak ===
 
+# === MODULE: step_gearlever v1 ===
 step_gearlever() {
     log "Installing Gear Lever..."
     if ! command -v flatpak >/dev/null && ! $DRY_RUN; then
@@ -95,6 +101,7 @@ step_gearlever() {
         warn "Gear Lever already installed"
     fi
 }
+# === END MODULE: step_gearlever ===
 
 main() {
     parse_args "$@"

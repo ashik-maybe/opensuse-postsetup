@@ -8,6 +8,7 @@
 # Exit codes: 0 ok · 1 error · 2 aborted
 # Idempotent: safe to re-run. Must run as root (except --dry-run).
 # Standalone: installs its own dependencies, needs no other script first.
+# === MODULES: config / helpers / guards / steps / main (all in this file) ===
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -84,6 +85,31 @@ install_pkgs() {
     ok "$label — done"
 }
 
+# === MODULE: step_vaapi v1 ===
+step_vaapi() {
+    install_pkgs "Installing VA-API drivers..." "${VAAPI_PKGS[@]}"
+}
+# === END MODULE: step_vaapi ===
+
+# === MODULE: step_vulkan v1 ===
+step_vulkan() {
+    install_pkgs "Installing Vulkan drivers..." "${VULKAN_PKGS[@]}"
+}
+# === END MODULE: step_vulkan ===
+
+# === MODULE: step_compute v1 ===
+step_compute() {
+    install_pkgs "Installing Intel compute runtime..." "${COMPUTE_PKGS[@]}"
+}
+# === END MODULE: step_compute ===
+
+# === MODULE: step_tools v1 ===
+step_tools() {
+    install_pkgs "Installing Intel GPU monitoring tools..." "${TOOLS_PKGS[@]}"
+}
+# === END MODULE: step_tools ===
+
+# === MODULE: step_env v1 ===
 step_env() {
     log "Setting environment variables..."
     if grep -q "LIBVA_DRIVER_NAME" "$ENV_FILE" 2>/dev/null; then
@@ -103,17 +129,14 @@ EOF"
         warn "Profile file already exists"
     fi
 }
+# === END MODULE: step_env ===
 
 main() {
     parse_args "$@"
     require_root
     check_intel_gpu
     run zypper --non-interactive --gpg-auto-import-keys refresh
-    install_pkgs "Installing VA-API drivers..." "${VAAPI_PKGS[@]}"
-    install_pkgs "Installing Vulkan drivers..." "${VULKAN_PKGS[@]}"
-    install_pkgs "Installing Intel compute runtime..." "${COMPUTE_PKGS[@]}"
-    install_pkgs "Installing Intel GPU monitoring tools..." "${TOOLS_PKGS[@]}"
-    step_env
+    step_vaapi; step_vulkan; step_compute; step_tools; step_env
     echo ""
     ok "Intel setup complete."
     echo "Verify with: vainfo · vulkaninfo --summary · clinfo · sudo intel_gpu_top"

@@ -7,6 +7,7 @@
 # Exit codes: 0 ok · 1 error · 2 aborted
 # Idempotent: safe to re-run. Must run as root (except --dry-run).
 # Standalone: adds its own repo, needs no other script first.
+# === MODULES: config / helpers / guards / steps / main (all in this file) ===
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -66,6 +67,7 @@ require_root() {
     command -v rpm >/dev/null || die "rpm not found (openSUSE required)"
 }
 
+# === MODULE: step_repo v1 ===
 step_repo() {
     log "Setting up Brave repository..."
     if zypper repos 2>/dev/null | grep -q "$REPO_ALIAS"; then
@@ -77,7 +79,9 @@ step_repo() {
     fi
     run zypper --non-interactive --gpg-auto-import-keys refresh --from "$REPO_ALIAS"
 }
+# === END MODULE: step_repo ===
 
+# === MODULE: step_install v1 ===
 step_install() {
     log "Installing Brave Browser..."
     if $DRY_RUN || ! rpm -q "$PKG" &>/dev/null; then
@@ -87,6 +91,7 @@ step_install() {
         warn "Brave Browser already installed"
     fi
 }
+# === END MODULE: step_install ===
 
 main() {
     parse_args "$@"
